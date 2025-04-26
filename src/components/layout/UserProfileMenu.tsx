@@ -3,22 +3,29 @@ import { signOut } from "@/services/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 
 export const UserProfileMenu = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   
   const handleLogout = async () => {
-    await signOut();
-    navigate("/login");
+    const { error } = await signOut();
+    if (!error) {
+      navigate("/login");
+    }
   };
   
   return (
     <div className="flex items-center gap-4">
-      <div className="hidden md:block">
-        <p className="text-sm font-medium">{user?.email}</p>
-        <p className="text-xs text-muted-foreground">Salon Manager</p>
+      <div className="hidden md:flex items-center gap-2">
+        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+          <User className="h-4 w-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-sm font-medium">{user?.email}</p>
+          <p className="text-xs text-muted-foreground">Salon Manager</p>
+        </div>
       </div>
       
       <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
