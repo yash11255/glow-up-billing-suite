@@ -3,7 +3,7 @@ import { signOut } from "@/services/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 export const UserProfileMenu = () => {
   const { user } = useAuth();

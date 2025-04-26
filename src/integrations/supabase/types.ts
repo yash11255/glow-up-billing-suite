@@ -9,7 +9,375 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      bill_products: {
+        Row: {
+          bill_id: string | null
+          created_at: string | null
+          id: string
+          price: number
+          product_id: string | null
+          product_name: string
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          bill_id?: string | null
+          created_at?: string | null
+          id?: string
+          price: number
+          product_id?: string | null
+          product_name: string
+          quantity: number
+          user_id: string
+        }
+        Update: {
+          bill_id?: string | null
+          created_at?: string | null
+          id?: string
+          price?: number
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bill_products_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bill_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bill_services: {
+        Row: {
+          bill_id: string | null
+          created_at: string | null
+          id: string
+          price: number
+          service_id: string | null
+          service_name: string
+          staff_id: string | null
+          staff_name: string
+          user_id: string
+        }
+        Insert: {
+          bill_id?: string | null
+          created_at?: string | null
+          id?: string
+          price: number
+          service_id?: string | null
+          service_name: string
+          staff_id?: string | null
+          staff_name: string
+          user_id: string
+        }
+        Update: {
+          bill_id?: string | null
+          created_at?: string | null
+          id?: string
+          price?: number
+          service_id?: string | null
+          service_name?: string
+          staff_id?: string | null
+          staff_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bill_services_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bill_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bill_services_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bills: {
+        Row: {
+          created_at: string | null
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string
+          discount_amount: number | null
+          discount_type: string | null
+          discount_value: number | null
+          id: string
+          status: string | null
+          subtotal: number
+          tax_amount: number
+          tax_rate: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id?: string | null
+          customer_name: string
+          customer_phone: string
+          discount_amount?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          status?: string | null
+          subtotal: number
+          tax_amount: number
+          tax_rate: number
+          total: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string | null
+          customer_name?: string
+          customer_phone?: string
+          discount_amount?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          status?: string | null
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          anniversary: string | null
+          birthday: string | null
+          created_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string
+          user_id: string
+        }
+        Insert: {
+          anniversary?: string | null
+          birthday?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone: string
+          user_id: string
+        }
+        Update: {
+          anniversary?: string | null
+          birthday?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      product_categories: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category_id: string | null
+          company_id: string | null
+          created_at: string | null
+          id: string
+          name: string
+          price: number
+          stock: number
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          price: number
+          stock?: number
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          price?: number
+          stock?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string | null
+          role: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          name?: string | null
+          role?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string | null
+          role?: string | null
+        }
+        Relationships: []
+      }
+      services: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration: number
+          id: string
+          name: string
+          price: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration: number
+          id?: string
+          name: string
+          price: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration?: number
+          id?: string
+          name?: string
+          price?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      staff: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          position: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          position?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          position?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

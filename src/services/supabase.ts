@@ -1,16 +1,9 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-// Get environment variables with fallbacks to prevent runtime errors
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Check if the required environment variables are set
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error(
-    "Missing Supabase environment variables. Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are defined in your .env file."
-  );
-}
+// We'll use the direct Supabase URL and anon key since we're in a frontend-only app
+const supabaseUrl = "https://vcjdxuzgkfjztlivqhtp.supabase.co";
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjamR4dXpna2ZqenRsaXZxaHRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2NTE2MjYsImV4cCI6MjA2MTIyNzYyNn0.ul3QQU89aurjB50-ziIXHr1hpwyd4PyXtJefSCx_VuQ";
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -20,7 +13,6 @@ export const signInWithEmail = async (email: string, password: string) => {
     email,
     password,
   });
-  
   return { data, error };
 };
 
@@ -29,7 +21,6 @@ export const signUpWithEmail = async (email: string, password: string) => {
     email,
     password,
   });
-  
   return { data, error };
 };
 
@@ -39,11 +30,11 @@ export const signOut = async () => {
 };
 
 export const getCurrentUser = async () => {
-  const { data, error } = await supabase.auth.getUser();
-  return { user: data?.user, error };
+  const { data: { user }, error } = await supabase.auth.getUser();
+  return { user, error };
 };
 
 export const getSession = async () => {
-  const { data, error } = await supabase.auth.getSession();
-  return { session: data?.session, error };
+  const { data: { session }, error } = await supabase.auth.getSession();
+  return { session, error };
 };
