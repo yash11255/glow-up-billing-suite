@@ -9,6 +9,22 @@ import { useQuery } from "@tanstack/react-query";
 import { getDashboardStats } from "@/services/supabase";
 import { DashboardStats } from "@/types";
 
+interface Transaction {
+  id: string;
+  customer: string;
+  amount: string;
+  status: "completed" | "pending" | "cancelled";
+  date: string;
+}
+
+interface StaffMemberPerformance {
+  id: string;
+  name: string;
+  position: string;
+  servicesCompleted: number;
+  revenue: string;
+}
+
 const Dashboard = () => {
   const [timeRange, setTimeRange] = useState<"daily" | "weekly" | "monthly">("daily");
 
@@ -26,6 +42,32 @@ const Dashboard = () => {
   // Format currency
   const formatCurrency = (amount: number) => {
     return `₹${amount.toLocaleString('en-IN')}`;
+  };
+
+  // Transform bill data to transaction format
+  const transformToTransactions = (bills: any[]): Transaction[] => {
+    if (!bills) return [];
+    return bills.map(bill => ({
+      id: bill.id,
+      customer: bill.customer || bill.customer_name,
+      amount: bill.amount?.toString() || bill.total?.toString(),
+      status: bill.status,
+      date: bill.date || new Date(bill.created_at).toLocaleString(),
+    }));
+  };
+
+  // Transform staff performance data
+  const transformToStaffPerformance = (staffData: any[]): StaffMemberPerformance[] => {
+    if (!staffData) return [];
+    return staffData.map(staff => ({
+      id: staff.id,
+      name: staff.name,
+      position: staff.position || '',
+      servicesCompleted: staff.servicesCompleted || 0,
+      revenue: typeof staff.revenue === 'string' 
+        ? staff.revenue 
+        : formatCurrency(staff.revenue || 0),
+    }));
   };
 
   return (
@@ -126,7 +168,7 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in animate-delay-400">
         <div className="lg:col-span-2">
-          <RecentTransactions transactions={data?.recentTransactions || []} />
+          <RecentTransactions transactions={transformToTransactions(data?.recentTransactions || [])} />
         </div>
         <div>
           <UpcomingEvents events={data?.upcomingEvents || []} />
@@ -134,7 +176,7 @@ const Dashboard = () => {
       </div>
 
       <div className="animate-fade-in animate-delay-500">
-        <StaffPerformance staffMembers={data?.staffPerformance || []} />
+        <StaffPerformance staffMembers={transformToStaffPerformance(data?.staffPerformance || [])} />
       </div>
     </div>
   );

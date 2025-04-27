@@ -1,55 +1,59 @@
+
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { format, addHours, parseISO } from "date-fns";
-import { Calendar as CalendarIcon, Clock } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { format, addMinutes, parseISO } from "date-fns";
+import { Appointment, Customer, Service, StaffMember } from "@/types";
 import { Calendar } from "@/components/ui/calendar";
-import { Customer, StaffMember, Service, Appointment } from "@/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { AppointmentStatus } from "./AppointmentStatusBadge";
+import { useAuth } from "@/hooks/useAuth";
+
+const formSchema = z.object({
+  customer_id: z.string().min(1, { message: "Customer is required" }),
+  staff_id: z.string().min(1, { message: "Staff member is required" }),
+  service_id: z.string().min(1, { message: "Service is required" }),
+  date: z.date({ required_error: "Date is required" }),
+  time: z.string().min(1, { message: "Time is required" }),
+  status: z.enum(["scheduled", "completed", "cancelled", "no-show"]),
+  notes: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface AppointmentFormProps {
   onSubmit: (appointment: Partial<Appointment>) => void;
-  initialData?: Partial<Appointment>;
+  initialData?: Appointment;
   initialDate?: Date;
 }
 
-export const AppointmentForm = ({
-  onSubmit,
-  initialData,
-  initialDate = new Date(),
-}: AppointmentFormProps) => {
-  const [formData, setFormData] = useState<Partial<Appointment>>({
-    customer_id: initialData?.customer_id || "",
-    staff_id: initialData?.staff_id || "",
-    service_id: initialData?.service_id || "",
-    service_name: initialData?.service_name || "",
-    start_time: initialData?.start_time || format(initialDate, "yyyy-MM-dd'T'HH:mm"),
-    end_time: initialData?.end_time || format(addHours(initialDate, 1), "yyyy-MM-dd'T'HH:mm"),
-    status: initialData?.status || "scheduled",
-    notes: initialData?.notes || "",
+export const AppointmentForm = ({ onSubmit, initialData, initialDate }: AppointmentFormProps) => {
+  const { user } = useAuth();
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+
+  // Setup form with default values
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      customer_id: initialData?.customer_id || "",
+      staff_id: initialData?.staff_id || "",
+      service_id: initialData?.service_id || "",
+      date: initialData ? parseISO(initialData.start_time) : initialDate || new Date(),
+      time: initialData ? format(parseISO(initialData.start_time), "HH:mm") : "10:00",
+      status: initialData?.status || "scheduled",
+      notes: initialData?.notes || "",
+    },
   });
-  const [date, setDate] = useState<Date>(
-    initialData?.start_time 
-      ? parseISO(initialData.start_time) 
-      : initialDate
-  );
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Fetch customers
   const { data: customers } = useQuery({
@@ -93,317 +97,236 @@ export const AppointmentForm = ({
     }
   });
 
-  // Update start and end time when date changes
+  // Update selected service when form value changes
   useEffect(() => {
-    if (date) {
-      const currentStartTime = formData.start_time ? parseISO(formData.start_time) : new Date();
-      const currentEndTime = formData.end_time ? parseISO(formData.end_time) : addHours(new Date(), 1);
-      
-      // Keep the time part but update the date part
-      const newStartTime = new Date(date);
-      newStartTime.setHours(currentStartTime.getHours(), currentStartTime.getMinutes(), 0, 0);
-      
-      const newEndTime = new Date(date);
-      newEndTime.setHours(currentEndTime.getHours(), currentEndTime.getMinutes(), 0, 0);
-      
-      setFormData((prev) => ({
-        ...prev,
-        start_time: format(newStartTime, "yyyy-MM-dd'T'HH:mm"),
-        end_time: format(newEndTime, "yyyy-MM-dd'T'HH:mm"),
-      }));
+    const serviceId = form.watch('service_id');
+    if (serviceId && services) {
+      const service = services.find(s => s.id === serviceId);
+      setSelectedService(service || null);
     }
-  }, [date]);
+  }, [form.watch('service_id'), services]);
 
-  // Update end time based on service duration when service changes
-  useEffect(() => {
-    if (formData.service_id && services) {
-      const selectedService = services.find(service => service.id === formData.service_id);
-      if (selectedService && formData.start_time) {
-        const startTime = parseISO(formData.start_time);
-        const endTime = addHours(startTime, selectedService.duration / 60);
-        
-        setFormData((prev) => ({
-          ...prev,
-          service_name: selectedService.name,
-          end_time: format(endTime, "yyyy-MM-dd'T'HH:mm"),
-        }));
-      }
-    }
-  }, [formData.service_id, formData.start_time, services]);
+  // Handle form submission
+  const handleSubmit = (values: FormValues) => {
+    // Find the selected service to get duration
+    const service = services?.find(s => s.id === values.service_id);
+    if (!service) return;
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    
-    if (!formData.customer_id) {
-      newErrors.customer_id = "Customer is required";
-    }
-    
-    if (!formData.staff_id) {
-      newErrors.staff_id = "Staff member is required";
-    }
-    
-    if (!formData.service_id) {
-      newErrors.service_id = "Service is required";
-    }
-    
-    if (!formData.start_time) {
-      newErrors.start_time = "Start time is required";
-    }
-    
-    if (!formData.end_time) {
-      newErrors.end_time = "End time is required";
-    } else if (formData.start_time && formData.end_time) {
-      const start = parseISO(formData.start_time);
-      const end = parseISO(formData.end_time);
-      if (end <= start) {
-        newErrors.end_time = "End time must be after start time";
-      }
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    // Parse the date and time
+    const dateTime = new Date(values.date);
+    const [hours, minutes] = values.time.split(':').map(Number);
+    dateTime.setHours(hours, minutes, 0, 0);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    
-    // Clear error when field is edited
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
-  };
+    // Calculate end time based on service duration
+    const endTime = addMinutes(dateTime, service.duration);
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    
-    // Clear error when field is edited
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
-  };
+    // Find service name
+    const serviceName = service.name;
 
-  const handleTimeChange = (name: string, value: string) => {
-    try {
-      if (name === 'start_time' || name === 'end_time') {
-        const [hours, minutes] = value.split(':').map(Number);
-        const newTime = new Date(date);
-        newTime.setHours(hours, minutes, 0, 0);
-        
-        setFormData((prev) => ({
-          ...prev,
-          [name]: format(newTime, "yyyy-MM-dd'T'HH:mm"),
-        }));
-        
-        // Clear error when field is edited
-        if (errors[name]) {
-          setErrors((prev) => ({
-            ...prev,
-            [name]: "",
-          }));
-        }
-      }
-    } catch (error) {
-      console.error("Error parsing time:", error);
-    }
-  };
+    // Create appointment data
+    const appointmentData: Partial<Appointment> = {
+      customer_id: values.customer_id,
+      staff_id: values.staff_id,
+      service_id: values.service_id,
+      service_name: serviceName,
+      start_time: dateTime.toISOString(),
+      end_time: endTime.toISOString(),
+      status: values.status,
+      notes: values.notes,
+      user_id: user?.id || '123',
+    };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (validateForm()) {
-      onSubmit(formData);
-    }
-  };
-
-  // Format time for display in time picker
-  const formatTimeForPicker = (dateTimeString?: string) => {
-    if (!dateTimeString) return "09:00";
-    try {
-      return format(parseISO(dateTimeString), "HH:mm");
-    } catch (error) {
-      return "09:00";
-    }
+    onSubmit(appointmentData);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="date">Date *</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, "PPP") : <span>Pick a date</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={(newDate) => newDate && setDate(newDate)}
-              initialFocus
-              className={cn("p-3 pointer-events-auto")}
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="start_time" className={errors.start_time ? "text-destructive" : ""}>
-            Start Time *
-          </Label>
-          <div className="flex">
-            <Clock className="h-4 w-4 mr-2 mt-2.5 text-muted-foreground" />
-            <Input
-              id="start_time"
-              type="time"
-              value={formatTimeForPicker(formData.start_time)}
-              onChange={(e) => handleTimeChange("start_time", e.target.value)}
-              className={errors.start_time ? "border-destructive" : ""}
-            />
-          </div>
-          {errors.start_time && <p className="text-xs text-destructive">{errors.start_time}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="end_time" className={errors.end_time ? "text-destructive" : ""}>
-            End Time *
-          </Label>
-          <div className="flex">
-            <Clock className="h-4 w-4 mr-2 mt-2.5 text-muted-foreground" />
-            <Input
-              id="end_time"
-              type="time"
-              value={formatTimeForPicker(formData.end_time)}
-              onChange={(e) => handleTimeChange("end_time", e.target.value)}
-              className={errors.end_time ? "border-destructive" : ""}
-            />
-          </div>
-          {errors.end_time && <p className="text-xs text-destructive">{errors.end_time}</p>}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="customer_id" className={errors.customer_id ? "text-destructive" : ""}>
-          Customer *
-        </Label>
-        <Select 
-          value={formData.customer_id || ""}
-          onValueChange={(value) => handleSelectChange("customer_id", value)}
-        >
-          <SelectTrigger className={errors.customer_id ? "border-destructive" : ""}>
-            <SelectValue placeholder="Select customer" />
-          </SelectTrigger>
-          <SelectContent>
-            {customers?.map((customer) => (
-              <SelectItem key={customer.id} value={customer.id}>
-                {customer.name} ({customer.phone})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.customer_id && <p className="text-xs text-destructive">{errors.customer_id}</p>}
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="service_id" className={errors.service_id ? "text-destructive" : ""}>
-          Service *
-        </Label>
-        <Select 
-          value={formData.service_id || ""}
-          onValueChange={(value) => handleSelectChange("service_id", value)}
-        >
-          <SelectTrigger className={errors.service_id ? "border-destructive" : ""}>
-            <SelectValue placeholder="Select service" />
-          </SelectTrigger>
-          <SelectContent>
-            {services?.map((service) => (
-              <SelectItem key={service.id} value={service.id}>
-                {service.name} - {service.duration} min (₹{service.price})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.service_id && <p className="text-xs text-destructive">{errors.service_id}</p>}
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="staff_id" className={errors.staff_id ? "text-destructive" : ""}>
-          Staff Member *
-        </Label>
-        <Select 
-          value={formData.staff_id || ""}
-          onValueChange={(value) => handleSelectChange("staff_id", value)}
-        >
-          <SelectTrigger className={errors.staff_id ? "border-destructive" : ""}>
-            <SelectValue placeholder="Select staff member" />
-          </SelectTrigger>
-          <SelectContent>
-            {staff?.map((staffMember) => (
-              <SelectItem key={staffMember.id} value={staffMember.id}>
-                {staffMember.name} - {staffMember.position || "Staff"}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.staff_id && <p className="text-xs text-destructive">{errors.staff_id}</p>}
-      </div>
-
-      {initialData && initialData.id && (
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
-          <Select 
-            value={formData.status || "scheduled"}
-            onValueChange={(value) => handleSelectChange("status", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="scheduled">Scheduled</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-              <SelectItem value="no-show">No Show</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-      
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea
-          id="notes"
-          name="notes"
-          value={formData.notes || ""}
-          onChange={handleInputChange}
-          placeholder="Add any special requests or notes"
-          rows={3}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="customer_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Customer</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select customer" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {customers?.map(customer => (
+                    <SelectItem key={customer.id} value={customer.id}>
+                      {customer.name} ({customer.phone})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      <Button type="submit" className="w-full">
-        {initialData?.id ? "Update Appointment" : "Create Appointment"}
-      </Button>
-    </form>
+        <FormField
+          control={form.control}
+          name="staff_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Staff</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select staff member" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {staff?.map(member => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="service_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Service</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select service" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {services?.map(service => (
+                    <SelectItem key={service.id} value={service.id}>
+                      {service.name} (₹{service.price} - {service.duration} min)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Time</FormLabel>
+                <div className="flex items-center">
+                  <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <FormControl>
+                    <Input type="time" {...field} className="w-full" />
+                  </FormControl>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {initialData && (
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="no-show">No Show</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Add any special requirements or notes" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {selectedService && (
+          <div className="text-sm text-muted-foreground">
+            <p>Duration: {selectedService.duration} minutes</p>
+            <p>Price: ₹{selectedService.price}</p>
+          </div>
+        )}
+
+        <Button type="submit" className="w-full">
+          {initialData ? "Update Appointment" : "Schedule Appointment"}
+        </Button>
+      </form>
+    </Form>
   );
 };

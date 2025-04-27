@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { PlusIcon, Search, Edit, Trash2, Mail, Phone } from "lucide-react";
 import { StaffForm } from "@/components/staff/StaffForm";
 import { StaffMember } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +52,7 @@ interface StaffFormData {
 
 const Staff = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [editStaff, setEditStaff] = useState<StaffMember | null>(null);
@@ -83,6 +85,7 @@ const Staff = () => {
           position: staffMember.position,
           phone: staffMember.phone || null,
           email: staffMember.email || null,
+          user_id: user?.id || '123', // Add user_id field
         })
         .select()
         .single();

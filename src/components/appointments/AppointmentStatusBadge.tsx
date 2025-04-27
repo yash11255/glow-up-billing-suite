@@ -1,7 +1,7 @@
 
 import { Badge } from "@/components/ui/badge";
 
-type AppointmentStatus = "scheduled" | "completed" | "cancelled" | "no-show";
+export type AppointmentStatus = "scheduled" | "completed" | "cancelled" | "no-show";
 
 interface AppointmentStatusBadgeProps {
   status: AppointmentStatus;

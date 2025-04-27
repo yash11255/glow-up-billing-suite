@@ -13,7 +13,7 @@ interface StaffMember {
   name: string;
   position: string;
   servicesCompleted: number;
-  revenue: string;
+  revenue: string | number;
 }
 
 interface StaffPerformanceProps {
@@ -21,6 +21,12 @@ interface StaffPerformanceProps {
 }
 
 export const StaffPerformance = ({ staffMembers }: StaffPerformanceProps) => {
+  // Format revenue to ensure string output
+  const formatRevenue = (revenue: string | number): string => {
+    if (typeof revenue === 'string') return revenue;
+    return `₹${revenue.toLocaleString('en-IN')}`;
+  };
+  
   return (
     <div className="bg-card rounded-xl shadow-sm p-6">
       <h2 className="text-lg font-semibold mb-4">Staff Performance</h2>
@@ -40,7 +46,7 @@ export const StaffPerformance = ({ staffMembers }: StaffPerformanceProps) => {
                 <TableCell className="font-medium">{staff.name}</TableCell>
                 <TableCell>{staff.position}</TableCell>
                 <TableCell>{staff.servicesCompleted}</TableCell>
-                <TableCell>{staff.revenue}</TableCell>
+                <TableCell>{formatRevenue(staff.revenue)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

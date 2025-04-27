@@ -1,4 +1,3 @@
-
 import { createClient } from "@supabase/supabase-js";
 
 // Use the Supabase URL and anon key
@@ -256,8 +255,8 @@ export const getDashboardStats = async (period: 'daily' | 'weekly' | 'monthly') 
     const totalSales = bills ? bills.reduce((sum, bill) => sum + bill.total, 0) : 0;
     
     // Count total customers, services and products for the period
-    const totalCustomers = customers ? parseInt(customers[0]?.count || "0") : 0;
-    const totalServices = billServices ? parseInt(billServices[0]?.count || "0") : 0;
+    const totalCustomers = customers ? parseInt(customers[0]?.count?.toString() || "0") : 0;
+    const totalServices = billServices ? parseInt(billServices[0]?.count?.toString() || "0") : 0;
     const totalProducts = billProducts ? billProducts.reduce((sum, product) => sum + (product.quantity || 0), 0) : 0;
     
     // Get the most recent transactions

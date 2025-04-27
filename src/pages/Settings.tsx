@@ -66,6 +66,24 @@ const Settings = () => {
     getUser();
   }, []);
 
+  // Helper function to safely parse JSON settings
+  const parseSettings = <T extends object>(jsonSettings: any, defaultSettings: T): T => {
+    if (!jsonSettings) return defaultSettings;
+    
+    try {
+      if (typeof jsonSettings === 'object') {
+        return jsonSettings as T;
+      }
+      if (typeof jsonSettings === 'string') {
+        return JSON.parse(jsonSettings) as T;
+      }
+      return defaultSettings;
+    } catch (e) {
+      console.error("Error parsing settings:", e);
+      return defaultSettings;
+    }
+  };
+
   // Fetch settings
   const { data: settings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ['settings', userId],
@@ -92,7 +110,7 @@ const Settings = () => {
             taxName: "GST",
           },
           discount_settings: {
-            defaultDiscountType: "percentage",
+            defaultDiscountType: "percentage" as const,
             defaultDiscountValue: 0,
             enableDiscount: true,
           },
@@ -106,7 +124,29 @@ const Settings = () => {
         } as Settings;
       }
       
-      return data;
+      // Parse JSON settings to ensure they have the correct types
+      const parsedData: Settings = {
+        ...data,
+        general_settings: parseSettings<GeneralSettings>(data.general_settings, {
+          salonName: "My Salon",
+          contactNumber: "",
+          address: "",
+          enableAppointmentReminders: true,
+          enableBirthdayWishes: true,
+        }),
+        tax_settings: parseSettings<TaxSettings>(data.tax_settings, {
+          defaultTaxRate: 18,
+          enableTax: true,
+          taxName: "GST",
+        }),
+        discount_settings: parseSettings<DiscountSettings>(data.discount_settings, {
+          defaultDiscountType: "percentage" as const,
+          defaultDiscountValue: 0,
+          enableDiscount: true,
+        }),
+      };
+      
+      return parsedData;
     },
     enabled: !!userId
   });
@@ -173,6 +213,7 @@ const Settings = () => {
     },
   });
 
+  // Update general form when settings change
   useEffect(() => {
     if (settings?.general_settings) {
       generalForm.reset(settings.general_settings);
@@ -193,6 +234,7 @@ const Settings = () => {
     },
   });
 
+  // Update tax form when settings change
   useEffect(() => {
     if (settings?.tax_settings) {
       taxForm.reset(settings.tax_settings);
@@ -213,6 +255,7 @@ const Settings = () => {
     },
   });
 
+  // Update discount form when settings change
   useEffect(() => {
     if (settings?.discount_settings) {
       discountForm.reset(settings.discount_settings);

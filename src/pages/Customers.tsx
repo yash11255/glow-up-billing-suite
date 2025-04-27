@@ -42,6 +42,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CustomerFormData {
   name: string;
@@ -53,6 +54,7 @@ interface CustomerFormData {
 
 const Customers = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [editCustomer, setEditCustomer] = useState<Customer | null>(null);
@@ -86,6 +88,7 @@ const Customers = () => {
           birthday: customer.birthday || null,
           anniversary: customer.anniversary || null,
           notes: customer.notes || null,
+          user_id: user?.id || '123', // Add user_id field
         })
         .select()
         .single();
