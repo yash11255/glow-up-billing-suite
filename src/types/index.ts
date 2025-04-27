@@ -6,7 +6,7 @@ export interface Customer {
   birthday?: string;
   anniversary?: string;
   notes?: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface Service {
@@ -14,14 +14,14 @@ export interface Service {
   name: string;
   price: number;
   duration: number;
-  description: string;
+  description?: string;
 }
 
 export interface StaffMember {
   id: string;
   name: string;
   position: string;
-  phone: string;
+  phone?: string;
   email?: string;
 }
 
@@ -30,14 +30,13 @@ export interface Product {
   name: string;
   price: number;
   stock: number;
-  categoryId: string;
-  companyId: string;
+  categoryId?: string;
+  companyId?: string;
 }
 
 export interface ProductCategory {
   id: string;
   name: string;
-  companyId: string;
 }
 
 export interface Company {
@@ -103,4 +102,62 @@ export interface StaffPerformance {
   position: string;
   servicesCompleted: number;
   revenue: number;
+}
+
+export interface Appointment {
+  id: string;
+  customer_id: string;
+  staff_id: string;
+  service_id: string;
+  service_name: string;
+  start_time: string;
+  end_time: string;
+  status: "scheduled" | "completed" | "cancelled" | "no-show";
+  notes?: string;
+  created_at?: string;
+  customers?: {
+    id: string;
+    name: string;
+    phone: string;
+  };
+  staff?: {
+    id: string;
+    name: string;
+  };
+  services?: {
+    id: string;
+    name: string;
+    duration: number;
+    price: number;
+  };
+}
+
+export interface TaxSettings {
+  defaultTaxRate: number;
+  enableTax: boolean;
+  taxName: string;
+}
+
+export interface DiscountSettings {
+  defaultDiscountType: "percentage" | "amount";
+  defaultDiscountValue: number;
+  enableDiscount: boolean;
+}
+
+export interface GeneralSettings {
+  salonName: string;
+  contactNumber: string;
+  address?: string;
+  enableAppointmentReminders: boolean;
+  enableBirthdayWishes: boolean;
+}
+
+export interface Settings {
+  id: string;
+  user_id: string;
+  tax_settings: TaxSettings;
+  discount_settings: DiscountSettings;
+  general_settings: GeneralSettings;
+  created_at?: string;
+  updated_at?: string;
 }
