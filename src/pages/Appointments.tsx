@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { AppointmentForm } from "@/components/appointments/AppointmentForm";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Appointment } from "@/types";
 import {
   Dialog,
@@ -20,24 +18,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Appointments = () => {
   const queryClient = useQueryClient();
@@ -47,34 +27,42 @@ const Appointments = () => {
   const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   
-  // Get days for the week view
   const weekDays = Array.from({ length: 7 }, (_, i) => 
     addDays(startOfWeek(selectedDate, { weekStartsOn: 1 }), i)
   );
 
-  // Fetch appointments
   const { data: appointments, isLoading } = useQuery({
     queryKey: ['appointments'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: appointmentsData, error } = await supabase
         .from('appointments')
         .select(`
           *,
-          customers:customer_id (id, name, phone),
-          staff:staff_id (id, name)
-        `)
-        .order('start_time');
+          customers:customer_id (
+            id,
+            name,
+            phone
+          ),
+          staff:staff_id (
+            id,
+            name
+          ),
+          services:service_id (
+            id,
+            name,
+            duration,
+            price
+          )
+        `);
       
       if (error) {
         toast.error("Error loading appointments");
         throw error;
       }
-      
-      return data as Appointment[];
+      return appointmentsData as unknown as Appointment[];
     }
   });
 
-  // Create appointment mutation
   const createAppointmentMutation = useMutation({
     mutationFn: async (appointment: Partial<Appointment>) => {
       const { data, error } = await supabase
@@ -87,7 +75,7 @@ const Appointments = () => {
           start_time: appointment.start_time,
           end_time: appointment.end_time,
           status: appointment.status || 'scheduled',
-          notes: appointment.notes || null,
+          notes: appointment.notes
         })
         .select()
         .single();
@@ -104,8 +92,7 @@ const Appointments = () => {
       toast.error(`Error creating appointment: ${error.message}`);
     }
   });
-  
-  // Update appointment mutation
+
   const updateAppointmentMutation = useMutation({
     mutationFn: async ({ id, appointment }: { id: string; appointment: Partial<Appointment> }) => {
       const { data, error } = await supabase
@@ -118,7 +105,7 @@ const Appointments = () => {
           start_time: appointment.start_time,
           end_time: appointment.end_time,
           status: appointment.status,
-          notes: appointment.notes,
+          notes: appointment.notes
         })
         .eq('id', id)
         .select()
@@ -138,7 +125,6 @@ const Appointments = () => {
     }
   });
 
-  // Cancel appointment mutation
   const cancelAppointmentMutation = useMutation({
     mutationFn: async (id: string) => {
       const { data, error } = await supabase
@@ -160,7 +146,6 @@ const Appointments = () => {
     }
   });
 
-  // Delete appointment mutation
   const deleteAppointmentMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -179,12 +164,10 @@ const Appointments = () => {
     }
   });
 
-  // Handle add appointment
   const handleAddAppointment = (appointment: Partial<Appointment>) => {
     createAppointmentMutation.mutate(appointment);
   };
 
-  // Handle edit appointment
   const handleEditAppointment = (appointment: Partial<Appointment>) => {
     if (!appointmentToEdit) return;
     updateAppointmentMutation.mutate({
@@ -193,13 +176,11 @@ const Appointments = () => {
     });
   };
 
-  // Handle edit button click
   const handleEditClick = (appointment: Appointment) => {
     setAppointmentToEdit(appointment);
     setOpenEditDialog(true);
   };
 
-  // Filter appointments for the selected date in day view
   const dayAppointments = appointments?.filter(appointment => {
     try {
       const appointmentDate = parseISO(appointment.start_time);
@@ -209,7 +190,6 @@ const Appointments = () => {
     }
   });
 
-  // Filter appointments for the week view
   const weekAppointments = weekDays.map(day => {
     return {
       day,
@@ -224,7 +204,6 @@ const Appointments = () => {
     };
   });
 
-  // Get appointment status badge
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'scheduled':
@@ -340,7 +319,6 @@ const Appointments = () => {
           </div>
         ) : (
           viewMode === "day" ? (
-            // Day view
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -451,7 +429,6 @@ const Appointments = () => {
               </CardContent>
             </Card>
           ) : (
-            // Week view
             <div className="grid grid-cols-7 gap-4">
               {weekAppointments.map(({ day, appointments }) => (
                 <Card key={format(day, 'yyyy-MM-dd')} className={cn(
@@ -512,7 +489,6 @@ const Appointments = () => {
         )}
       </div>
 
-      {/* Edit Appointment Dialog */}
       <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>

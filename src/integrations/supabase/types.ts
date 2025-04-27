@@ -9,6 +9,70 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          created_at: string | null
+          customer_id: string | null
+          end_time: string
+          id: string
+          notes: string | null
+          service_id: string | null
+          service_name: string
+          staff_id: string | null
+          start_time: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id?: string | null
+          end_time: string
+          id?: string
+          notes?: string | null
+          service_id?: string | null
+          service_name: string
+          staff_id?: string | null
+          start_time: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string | null
+          end_time?: string
+          id?: string
+          notes?: string | null
+          service_id?: string | null
+          service_name?: string
+          staff_id?: string | null
+          start_time?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bill_products: {
         Row: {
           bill_id: string | null
@@ -344,6 +408,36 @@ export type Database = {
           id?: string
           name?: string
           price?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          created_at: string | null
+          discount_settings: Json
+          general_settings: Json
+          id: string
+          tax_settings: Json
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          discount_settings?: Json
+          general_settings?: Json
+          id?: string
+          tax_settings?: Json
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          discount_settings?: Json
+          general_settings?: Json
+          id?: string
+          tax_settings?: Json
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
