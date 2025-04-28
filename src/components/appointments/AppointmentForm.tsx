@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -18,13 +19,30 @@ interface Appointment {
 interface AppointmentFormProps {
   onSubmit: (appointment: Partial<Appointment>) => void;
   initialData?: Partial<Appointment>;
+  initialDate?: Date; // Add new optional prop for initialDate
 }
 
-export const AppointmentForm = ({ onSubmit, initialData = {} }: AppointmentFormProps) => {
+export const AppointmentForm = ({ onSubmit, initialData = {}, initialDate }: AppointmentFormProps) => {
   const { user } = useAuth();
+  
+  // If initialDate is provided and there's no start_time in initialData,
+  // set default start_time based on initialDate
+  const defaultStartTime = initialDate ? new Date(initialDate).toISOString().slice(0, 16) : '';
+  
+  // If initialDate is provided and there's no end_time in initialData,
+  // set default end_time based on initialDate + 1 hour
+  let defaultEndTime = '';
+  if (initialDate) {
+    const endDate = new Date(initialDate);
+    endDate.setHours(endDate.getHours() + 1);
+    defaultEndTime = endDate.toISOString().slice(0, 16);
+  }
+  
   const [appointment, setAppointment] = useState<Partial<Appointment>>({
     ...initialData,
-    user_id: user?.id
+    user_id: user?.id,
+    start_time: initialData.start_time || defaultStartTime,
+    end_time: initialData.end_time || defaultEndTime
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

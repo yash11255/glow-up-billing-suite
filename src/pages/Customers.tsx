@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +8,7 @@ import { PlusIcon, Search, Edit, Trash2, Phone, Calendar } from "lucide-react";
 import { CustomerForm } from "@/components/billing/CustomerForm";
 import { Customer } from "@/types";
 import { format } from "date-fns";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +42,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface CustomerFormData {
   name: string;
@@ -60,7 +59,6 @@ const Customers = () => {
   const [editCustomer, setEditCustomer] = useState<Customer | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
 
-  // Fetch customers
   const { data: customers, isLoading } = useQuery({
     queryKey: ['customers'],
     queryFn: async () => {
@@ -77,7 +75,6 @@ const Customers = () => {
     }
   });
 
-  // Create customer mutation
   const createCustomerMutation = useMutation({
     mutationFn: async (customer: CustomerFormData) => {
       const { data, error } = await supabase
@@ -88,7 +85,7 @@ const Customers = () => {
           birthday: customer.birthday || null,
           anniversary: customer.anniversary || null,
           notes: customer.notes || null,
-          user_id: user?.id || '123', // Add user_id field
+          user_id: user?.id || '123',
         })
         .select()
         .single();
@@ -106,7 +103,6 @@ const Customers = () => {
     }
   });
 
-  // Update customer mutation
   const updateCustomerMutation = useMutation({
     mutationFn: async ({ id, customer }: { id: string; customer: CustomerFormData }) => {
       const { data, error } = await supabase
@@ -136,7 +132,6 @@ const Customers = () => {
     }
   });
 
-  // Delete customer mutation
   const deleteCustomerMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -155,12 +150,10 @@ const Customers = () => {
     }
   });
 
-  // Handle Add Customer
   const handleAddCustomer = (customer: CustomerFormData) => {
     createCustomerMutation.mutate(customer);
   };
 
-  // Handle Edit Customer
   const handleEditCustomer = (customer: CustomerFormData) => {
     if (!editCustomer) return;
     updateCustomerMutation.mutate({
@@ -169,20 +162,17 @@ const Customers = () => {
     });
   };
 
-  // Handle Edit Button Click
   const handleEditClick = (customer: Customer) => {
     setEditCustomer(customer);
     setOpenEditDialog(true);
   };
 
-  // Filter customers based on search query
   const filteredCustomers = customers?.filter(
     (customer) =>
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.phone.includes(searchQuery)
   );
 
-  // Format date for display
   const formatDate = (dateString?: string) => {
     if (!dateString) return "-";
     try {
@@ -350,7 +340,6 @@ const Customers = () => {
         )}
       </div>
 
-      {/* Edit Customer Dialog */}
       <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
         <DialogContent>
           <DialogHeader>
