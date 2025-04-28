@@ -11,7 +11,7 @@ import {
   User,
   Menu,
   X,
-  database,
+  Database,
   Scissors
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,47 +52,47 @@ const SidebarLayout = ({ children }: SidebarLayoutProps) => {
     {
       title: "Dashboard",
       href: "/dashboard",
-      icon: <Home className="h-5 w-5" />,
+      icon: Home,
     },
     {
       title: "Appointments",
       href: "/appointments",
-      icon: <Calendar className="h-5 w-5" />,
+      icon: Calendar,
     },
     {
       title: "Billing",
       href: "/billing",
-      icon: <FileText className="h-5 w-5" />,
+      icon: FileText,
     },
     {
       title: "Transactions",
       href: "/transactions",
-      icon: <database className="h-5 w-5" />,
+      icon: Database,
     },
     {
       title: "Customers",
       href: "/customers",
-      icon: <Users className="h-5 w-5" />,
+      icon: Users,
     },
     {
       title: "Inventory",
       href: "/inventory",
-      icon: <Package className="h-5 w-5" />,
+      icon: Package,
     },
     {
       title: "Services",
       href: "/services",
-      icon: <Scissors className="h-5 w-5" />,
+      icon: Scissors,
     },
     {
       title: "Staff",
       href: "/staff",
-      icon: <Users className="h-5 w-5" />,
+      icon: Users,
     },
     {
       title: "Settings",
       href: "/settings",
-      icon: <Settings className="h-5 w-5" />,
+      icon: Settings,
     },
   ];
 
