@@ -264,6 +264,7 @@ export type Database = {
           anniversary: string | null
           birthday: string | null
           created_at: string | null
+          gst_number: string | null
           id: string
           name: string
           notes: string | null
@@ -274,6 +275,7 @@ export type Database = {
           anniversary?: string | null
           birthday?: string | null
           created_at?: string | null
+          gst_number?: string | null
           id?: string
           name: string
           notes?: string | null
@@ -284,6 +286,7 @@ export type Database = {
           anniversary?: string | null
           birthday?: string | null
           created_at?: string | null
+          gst_number?: string | null
           id?: string
           name?: string
           notes?: string | null

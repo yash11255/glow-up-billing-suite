@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Minus, X } from "lucide-react";
@@ -58,7 +57,6 @@ export const BillForm = ({
   const [customerGST, setCustomerGST] = useState<string>("");
   const [businessGST, setBusinessGST] = useState<string>("");
   
-  // Calculate subtotal separately for services and products
   const servicesSubtotal = selectedServices.reduce((acc, service) => acc + service.price, 0);
   const productsSubtotal = selectedProducts.reduce((acc, product) => acc + (product.price * product.quantity), 0);
   const subtotal = servicesSubtotal + productsSubtotal;
@@ -69,11 +67,9 @@ export const BillForm = ({
   
   const afterDiscount = subtotal - discountValue;
   
-  // Apply tax only to services, not to products
   const taxAmount = servicesSubtotal > 0 ? (servicesSubtotal - (servicesSubtotal * discountValue / subtotal)) * (taxRate / 100) : 0;
   const total = afterDiscount + taxAmount;
 
-  // Fetch business GST from settings
   const { data: settings } = useQuery({
     queryKey: ['settings'],
     queryFn: async () => {
@@ -87,36 +83,21 @@ export const BillForm = ({
     }
   });
 
-  // Update business GST from settings
   useEffect(() => {
-    if (settings?.general_settings?.businessGST) {
-      setBusinessGST(settings.general_settings.businessGST);
+    if (settings?.general_settings) {
+      const generalSettings = typeof settings.general_settings === 'string' 
+        ? JSON.parse(settings.general_settings)
+        : settings.general_settings;
+      
+      setBusinessGST(generalSettings.businessGST || '');
     }
   }, [settings]);
 
-  // Fetch customer GST if customer exists in database
   useEffect(() => {
-    const fetchCustomerDetails = async () => {
-      if (!customer.id) return;
-
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('id', customer.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching customer details:", error);
-        return;
-      }
-
-      if (data && data.gst_number) {
-        setCustomerGST(data.gst_number);
-      }
-    };
-
-    fetchCustomerDetails();
-  }, [customer.id]);
+    if (customer?.gst_number) {
+      setCustomerGST(customer.gst_number);
+    }
+  }, [customer]);
 
   const handleServiceAdd = () => {
     setSelectedServices([

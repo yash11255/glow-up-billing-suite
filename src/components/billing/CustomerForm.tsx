@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -6,9 +5,9 @@ export interface CustomerFormData {
   id?: string;
   name: string;
   phone: string;
+  gst_number?: string;
   birthday?: string;
   anniversary?: string;
-  gst_number?: string;
   notes?: string;
 }
 
