@@ -1,111 +1,148 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-
-import SidebarLayout from "./components/layout/SidebarLayout";
-import Dashboard from "./pages/Dashboard";
-import Services from "./pages/Services";
-import Billing from "./pages/Billing";
-import Inventory from "./pages/Inventory";
+import React, { useEffect, useState } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import Index from "./pages/Index";
 import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
-import Customers from "./pages/Customers";
-import Staff from "./pages/Staff";
+import Dashboard from "./pages/Dashboard";
 import Appointments from "./pages/Appointments";
+import Billing from "./pages/Billing";
+import Customers from "./pages/Customers";
+import Inventory from "./pages/Inventory";
+import Services from "./pages/Services";
+import Staff from "./pages/Staff";
 import Settings from "./pages/Settings";
+import NotFound from "./pages/NotFound";
+import { useAuth } from "./hooks/useAuth";
+import { supabase } from "./services/supabase";
 
-const queryClient = new QueryClient();
+// Import the Transactions page
+import Transactions from "./pages/Transactions";
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public route */}
-            <Route path="/login" element={<Login />} />
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  const [session, setSession] = useState(null);
 
-            {/* Protected routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route
-                path="/"
-                element={
-                  <SidebarLayout>
-                    <Dashboard />
-                  </SidebarLayout>
-                }
-              />
-              <Route
-                path="/services"
-                element={
-                  <SidebarLayout>
-                    <Services />
-                  </SidebarLayout>
-                }
-              />
-              <Route
-                path="/billing"
-                element={
-                  <SidebarLayout>
-                    <Billing />
-                  </SidebarLayout>
-                }
-              />
-              <Route
-                path="/inventory"
-                element={
-                  <SidebarLayout>
-                    <Inventory />
-                  </SidebarLayout>
-                }
-              />
-              <Route
-                path="/customers"
-                element={
-                  <SidebarLayout>
-                    <Customers />
-                  </SidebarLayout>
-                }
-              />
-              <Route
-                path="/staff"
-                element={
-                  <SidebarLayout>
-                    <Staff />
-                  </SidebarLayout>
-                }
-              />
-              <Route
-                path="/appointments"
-                element={
-                  <SidebarLayout>
-                    <Appointments />
-                  </SidebarLayout>
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <SidebarLayout>
-                    <Settings />
-                  </SidebarLayout>
-                }
-              />
-            </Route>
-            
-            {/* 404 route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data?.session);
+    };
+
+    fetchSession();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user && !session) {
+    return <Navigate to="/login" />;
+  }
+
+  return children;
+};
+
+const routes = [
+  {
+    path: "/",
+    element: <Index />,
+  },
+  {
+    path: "/dashboard",
+    element: (
+      <ProtectedRoute>
+        <Dashboard />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/appointments",
+    element: (
+      <ProtectedRoute>
+        <Appointments />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/billing",
+    element: (
+      <ProtectedRoute>
+        <Billing />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/customers",
+    element: (
+      <ProtectedRoute>
+        <Customers />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/inventory",
+    element: (
+      <ProtectedRoute>
+        <Inventory />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/services",
+    element: (
+      <ProtectedRoute>
+        <Services />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/staff",
+    element: (
+      <ProtectedRoute>
+        <Staff />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/transactions",
+    element: (
+      <ProtectedRoute>
+        <Transactions />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/settings",
+    element: (
+      <ProtectedRoute>
+        <Settings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "*",
+    element: <NotFound />,
+  },
+];
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        {routes.map((route, index) => (
+          <Route key={index} path={route.path} element={route.element} />
+        ))}
+      </Routes>
+    </Router>
+  );
+}
 
 export default App;

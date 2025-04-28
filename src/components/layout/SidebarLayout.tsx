@@ -1,4 +1,3 @@
-
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -11,7 +10,9 @@ import {
   Package,
   User,
   Menu,
-  X
+  X,
+  database,
+  Scissors
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -47,15 +48,52 @@ const SidebarLayout = ({ children }: SidebarLayoutProps) => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   
-  const sidebarItems = [
-    { icon: Home, label: "Dashboard", to: "/" },
-    { icon: Users, label: "Customers", to: "/customers" },
-    { icon: FileText, label: "Billing", to: "/billing" },
-    { icon: Package, label: "Services", to: "/services" },
-    { icon: Package, label: "Inventory", to: "/inventory" },
-    { icon: User, label: "Staff", to: "/staff" },
-    { icon: Calendar, label: "Appointments", to: "/appointments" },
-    { icon: Settings, label: "Settings", to: "/settings" },
+  const sidebarNavItems = [
+    {
+      title: "Dashboard",
+      href: "/dashboard",
+      icon: <Home className="h-5 w-5" />,
+    },
+    {
+      title: "Appointments",
+      href: "/appointments",
+      icon: <Calendar className="h-5 w-5" />,
+    },
+    {
+      title: "Billing",
+      href: "/billing",
+      icon: <FileText className="h-5 w-5" />,
+    },
+    {
+      title: "Transactions",
+      href: "/transactions",
+      icon: <database className="h-5 w-5" />,
+    },
+    {
+      title: "Customers",
+      href: "/customers",
+      icon: <Users className="h-5 w-5" />,
+    },
+    {
+      title: "Inventory",
+      href: "/inventory",
+      icon: <Package className="h-5 w-5" />,
+    },
+    {
+      title: "Services",
+      href: "/services",
+      icon: <Scissors className="h-5 w-5" />,
+    },
+    {
+      title: "Staff",
+      href: "/staff",
+      icon: <Users className="h-5 w-5" />,
+    },
+    {
+      title: "Settings",
+      href: "/settings",
+      icon: <Settings className="h-5 w-5" />,
+    },
   ];
 
   return (
@@ -88,13 +126,13 @@ const SidebarLayout = ({ children }: SidebarLayoutProps) => {
           </h1>
         </div>
         <div className="flex-1 px-3 py-4 space-y-1">
-          {sidebarItems.map((item) => (
+          {sidebarNavItems.map((item) => (
             <SidebarItem
-              key={item.to}
+              key={item.href}
               icon={item.icon}
-              label={item.label}
-              to={item.to}
-              isActive={location.pathname === item.to}
+              label={item.title}
+              to={item.href}
+              isActive={location.pathname === item.href}
             />
           ))}
         </div>
