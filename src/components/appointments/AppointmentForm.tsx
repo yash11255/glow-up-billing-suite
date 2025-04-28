@@ -179,7 +179,7 @@ export const AppointmentForm = ({ onSubmit, initialData = {}, initialDate }: App
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               {isSearching && (
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <Spinner size="sm" />
+                  <Spinner />
                 </div>
               )}
             </div>

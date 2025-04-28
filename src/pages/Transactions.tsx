@@ -27,7 +27,7 @@ import {
 import { format, startOfDay, startOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 const Transactions = () => {
   const { user } = useAuth();
@@ -282,7 +282,7 @@ const Transactions = () => {
                             size="icon"
                             onClick={() => handleDeleteTransaction(transaction.id)}
                           >
-                            <trash2 className="h-4 w-4 text-red-500" />
+                            <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
