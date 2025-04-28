@@ -3,10 +3,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export interface CustomerFormData {
+  id?: string;
   name: string;
   phone: string;
   birthday?: string;
   anniversary?: string;
+  gst_number?: string;
   notes?: string;
 }
 
@@ -60,6 +62,19 @@ export const CustomerForm = ({
           value={customer.phone}
           onChange={handleChange}
           required
+          className="mt-1 block w-full rounded-md border-border px-3 py-2 bg-background text-foreground shadow-sm focus:border-primary focus:ring focus:ring-primary/30 focus:ring-opacity-50"
+        />
+      </div>
+      <div>
+        <label htmlFor="gst_number" className="block text-sm font-medium">
+          GST Number
+        </label>
+        <input
+          id="gst_number"
+          name="gst_number"
+          type="text"
+          value={customer.gst_number || ""}
+          onChange={handleChange}
           className="mt-1 block w-full rounded-md border-border px-3 py-2 bg-background text-foreground shadow-sm focus:border-primary focus:ring focus:ring-primary/30 focus:ring-opacity-50"
         />
       </div>

@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useEffect, useState, ReactNode } from "react";
 import { supabase, getCurrentUser, getSession } from "@/services/supabase";
 import { User, Session } from "@supabase/supabase-js";
 
@@ -9,9 +9,7 @@ interface AuthContextType {
   loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, session: null, loading: true });
-
-export const useAuth = () => useContext(AuthContext);
+export const AuthContext = createContext<AuthContextType>({ user: null, session: null, loading: true });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);

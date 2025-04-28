@@ -1,9 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Minus, X } from "lucide-react";
 import { CustomerFormData } from "./CustomerForm";
 import { Service } from "../services/ServiceList";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Staff {
   id: string;
@@ -53,17 +55,68 @@ export const BillForm = ({
   const [taxRate, setTaxRate] = useState(18); // 18% GST default
   const [discountAmount, setDiscountAmount] = useState(0);
   const [discountType, setDiscountType] = useState<"percentage" | "amount">("percentage");
+  const [customerGST, setCustomerGST] = useState<string>("");
+  const [businessGST, setBusinessGST] = useState<string>("");
   
-  const subtotal = selectedServices.reduce((acc, service) => acc + service.price, 0) +
-                  selectedProducts.reduce((acc, product) => acc + (product.price * product.quantity), 0);
+  // Calculate subtotal separately for services and products
+  const servicesSubtotal = selectedServices.reduce((acc, service) => acc + service.price, 0);
+  const productsSubtotal = selectedProducts.reduce((acc, product) => acc + (product.price * product.quantity), 0);
+  const subtotal = servicesSubtotal + productsSubtotal;
   
   const discountValue = discountType === "percentage" 
     ? (subtotal * (discountAmount / 100)) 
     : discountAmount;
   
   const afterDiscount = subtotal - discountValue;
-  const taxAmount = afterDiscount * (taxRate / 100);
+  
+  // Apply tax only to services, not to products
+  const taxAmount = servicesSubtotal > 0 ? (servicesSubtotal - (servicesSubtotal * discountValue / subtotal)) * (taxRate / 100) : 0;
   const total = afterDiscount + taxAmount;
+
+  // Fetch business GST from settings
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('general_settings')
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Update business GST from settings
+  useEffect(() => {
+    if (settings?.general_settings?.businessGST) {
+      setBusinessGST(settings.general_settings.businessGST);
+    }
+  }, [settings]);
+
+  // Fetch customer GST if customer exists in database
+  useEffect(() => {
+    const fetchCustomerDetails = async () => {
+      if (!customer.id) return;
+
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', customer.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching customer details:", error);
+        return;
+      }
+
+      if (data && data.gst_number) {
+        setCustomerGST(data.gst_number);
+      }
+    };
+
+    fetchCustomerDetails();
+  }, [customer.id]);
 
   const handleServiceAdd = () => {
     setSelectedServices([
@@ -136,7 +189,10 @@ export const BillForm = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
-      customer,
+      customer: {
+        ...customer,
+        gst_number: customerGST
+      },
       services: selectedServices,
       products: selectedProducts,
       taxRate,
@@ -146,6 +202,9 @@ export const BillForm = ({
       discountValue,
       taxAmount,
       total,
+      businessGST,
+      servicesSubtotal,
+      productsSubtotal
     });
   };
 
@@ -161,6 +220,16 @@ export const BillForm = ({
           <div>
             <p className="text-sm font-medium">Phone</p>
             <p>{customer.phone}</p>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium mb-1">GST Number (Optional)</label>
+            <input
+              type="text"
+              value={customerGST}
+              onChange={(e) => setCustomerGST(e.target.value)}
+              placeholder="Enter customer GST number"
+              className="mt-1 block w-full rounded-md border-border px-3 py-2 bg-background text-foreground shadow-sm focus:border-primary focus:ring focus:ring-primary/30 focus:ring-opacity-50"
+            />
           </div>
         </div>
       </div>
@@ -350,7 +419,7 @@ export const BillForm = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <h3 className="font-medium mb-3">Tax</h3>
+          <h3 className="font-medium mb-3">Tax (Applied only to services)</h3>
           <div className="flex items-center">
             <input
               type="number"
@@ -362,6 +431,11 @@ export const BillForm = ({
             />
             <span>%</span>
           </div>
+          {servicesSubtotal > 0 && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Tax is applied only to services: ₹{taxAmount.toFixed(2)} on ₹{servicesSubtotal.toFixed(2)}
+            </p>
+          )}
         </div>
 
         <div>
@@ -386,10 +460,29 @@ export const BillForm = ({
         </div>
       </div>
 
+      <div>
+        <h3 className="font-medium mb-3">Business GST Number</h3>
+        <input
+          type="text"
+          value={businessGST}
+          onChange={(e) => setBusinessGST(e.target.value)}
+          placeholder="Enter your business GST number"
+          className="w-full px-3 py-2 border-border rounded-md"
+        />
+      </div>
+
       <div className="border-t pt-4 mt-6">
         <div className="space-y-2">
           <div className="flex justify-between">
-            <span>Subtotal</span>
+            <span>Services Subtotal</span>
+            <span>₹{servicesSubtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Products Subtotal</span>
+            <span>₹{productsSubtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Total Subtotal</span>
             <span>₹{subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between">
@@ -397,7 +490,7 @@ export const BillForm = ({
             <span>₹{discountValue.toFixed(2)}</span>
           </div>
           <div className="flex justify-between">
-            <span>Tax ({taxRate}%)</span>
+            <span>Tax ({taxRate}%) - Applied to services only</span>
             <span>₹{taxAmount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between font-bold pt-2 border-t">

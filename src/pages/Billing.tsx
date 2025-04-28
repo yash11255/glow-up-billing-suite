@@ -1,14 +1,81 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { CustomerForm, CustomerFormData } from "@/components/billing/CustomerForm";
 import { BillForm } from "@/components/billing/BillForm";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Billing = () => {
   const [step, setStep] = useState<"customer" | "bill">("customer");
   const [customerData, setCustomerData] = useState<CustomerFormData | null>(null);
   const [isBillCreated, setIsBillCreated] = useState(false);
   const [currentBill, setCurrentBill] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchResults, setSearchResults] = useState<CustomerFormData[]>([]);
+
+  // Fetch settings for default values
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch customers for searching
+  const { data: customers } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*');
+      
+      if (error) throw error;
+      return data.map(customer => ({
+        id: customer.id,
+        name: customer.name,
+        phone: customer.phone,
+        birthday: customer.birthday,
+        anniversary: customer.anniversary,
+        gst_number: customer.gst_number,
+        notes: customer.notes
+      }));
+    }
+  });
+
+  // Search for customers when user types
+  useEffect(() => {
+    if (!searchTerm || searchTerm.length < 3 || !customers) {
+      setSearchResults([]);
+      return;
+    }
+
+    const filteredCustomers = customers.filter(customer => 
+      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      customer.phone.includes(searchTerm)
+    );
+    
+    setSearchResults(filteredCustomers);
+  }, [searchTerm, customers]);
+
+  // Fetch staff
+  const { data: staffMembers } = useQuery({
+    queryKey: ['staff'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('staff')
+        .select('*');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   // Mock data for demonstration
   const mockServices = [
@@ -42,13 +109,6 @@ const Billing = () => {
     },
   ];
 
-  const mockStaff = [
-    { id: "staff1", name: "Anjali Sharma" },
-    { id: "staff2", name: "Rajat Kumar" },
-    { id: "staff3", name: "Pooja Singh" },
-    { id: "staff4", name: "Vivek Malhotra" },
-  ];
-
   const mockProducts = [
     {
       id: "prod1",
@@ -75,6 +135,13 @@ const Billing = () => {
       stock: 15,
     },
   ];
+
+  const handleCustomerSelect = (customer: CustomerFormData) => {
+    setCustomerData(customer);
+    setStep("bill");
+    setSearchTerm("");
+    setSearchResults([]);
+  };
 
   const handleCustomerSubmit = (customer: CustomerFormData) => {
     setCustomerData(customer);
@@ -158,14 +225,49 @@ const Billing = () => {
           </div>
 
           {step === "customer" ? (
-            <CustomerForm onSubmit={handleCustomerSubmit} />
+            <>
+              {/* Customer search */}
+              <div className="mb-6">
+                <label htmlFor="customerSearch" className="block text-sm font-medium mb-2">
+                  Search Existing Customer
+                </label>
+                <input
+                  id="customerSearch"
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by name or phone (min 3 characters)"
+                  className="w-full p-2 border rounded-md"
+                />
+                
+                {searchResults.length > 0 && (
+                  <div className="mt-2 border rounded-md max-h-60 overflow-y-auto">
+                    {searchResults.map((customer) => (
+                      <div 
+                        key={customer.id} 
+                        className="p-3 border-b cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleCustomerSelect(customer)}
+                      >
+                        <div className="font-medium">{customer.name}</div>
+                        <div className="text-sm text-gray-600">{customer.phone}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              <div className="mb-6">
+                <h3 className="font-medium mb-4">New Customer</h3>
+              </div>
+              <CustomerForm onSubmit={handleCustomerSubmit} />
+            </>
           ) : (
             <>
               {customerData && (
                 <BillForm
                   customer={customerData}
                   services={mockServices}
-                  staff={mockStaff}
+                  staff={staffMembers || []}
                   products={mockProducts}
                   onSubmit={handleBillSubmit}
                 />
@@ -193,6 +295,9 @@ const Billing = () => {
               </div>
               <div className="text-right">
                 <p className="font-medium">Bill #{currentBill.id}</p>
+                {currentBill.businessGST && (
+                  <p className="text-sm text-muted-foreground">Business GST: {currentBill.businessGST}</p>
+                )}
               </div>
             </div>
 
@@ -207,6 +312,12 @@ const Billing = () => {
                   <p className="text-sm font-medium">Phone</p>
                   <p>{currentBill.customer.phone}</p>
                 </div>
+                {currentBill.customer.gst_number && (
+                  <div>
+                    <p className="text-sm font-medium">GST Number</p>
+                    <p>{currentBill.customer.gst_number}</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -226,7 +337,7 @@ const Billing = () => {
                       <tr key={index} className="border-b">
                         <td className="py-2">{service.name}</td>
                         <td className="py-2">
-                          {mockStaff.find(s => s.id === service.staffId)?.name}
+                          {staffMembers && staffMembers.find(s => s.id === service.staffId)?.name || "N/A"}
                         </td>
                         <td className="py-2 text-right">₹{service.price}</td>
                       </tr>
@@ -266,7 +377,15 @@ const Billing = () => {
 
             <div className="mt-6">
               <div className="flex justify-between py-1">
-                <span>Subtotal</span>
+                <span>Services Subtotal</span>
+                <span>₹{currentBill.servicesSubtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span>Products Subtotal</span>
+                <span>₹{currentBill.productsSubtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span>Total Subtotal</span>
                 <span>₹{currentBill.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between py-1">
@@ -275,7 +394,7 @@ const Billing = () => {
               </div>
               <div className="flex justify-between py-1">
                 <span>
-                  Tax ({currentBill.taxRate}%)
+                  Tax ({currentBill.taxRate}%) - Applied to services only
                 </span>
                 <span>₹{currentBill.taxAmount.toFixed(2)}</span>
               </div>

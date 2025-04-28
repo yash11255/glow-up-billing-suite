@@ -32,6 +32,7 @@ const generalSettingsSchema = z.object({
   salonName: z.string().min(1),
   contactNumber: z.string().min(1),
   address: z.string().optional(),
+  businessGST: z.string().optional(),
   enableAppointmentReminders: z.boolean(),
   enableBirthdayWishes: z.boolean(),
 });
@@ -118,6 +119,7 @@ const Settings = () => {
             salonName: "My Salon",
             contactNumber: "",
             address: "",
+            businessGST: "",
             enableAppointmentReminders: true,
             enableBirthdayWishes: true,
           },
@@ -131,6 +133,7 @@ const Settings = () => {
           salonName: "My Salon",
           contactNumber: "",
           address: "",
+          businessGST: "",
           enableAppointmentReminders: true,
           enableBirthdayWishes: true,
         }),
@@ -208,6 +211,7 @@ const Settings = () => {
       salonName: "My Salon",
       contactNumber: "",
       address: "",
+      businessGST: "",
       enableAppointmentReminders: true,
       enableBirthdayWishes: true,
     },
@@ -341,6 +345,20 @@ const Settings = () => {
                         )}
                       />
                       
+                      <FormField
+                        control={generalForm.control}
+                        name="businessGST"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Business GST Number</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter business GST number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
                       <Separator className="my-4" />
                       
                       <FormField
@@ -406,7 +424,7 @@ const Settings = () => {
                           <FormItem className="flex items-center justify-between rounded-lg border p-4">
                             <div className="space-y-0.5">
                               <FormLabel className="text-base">Enable Tax</FormLabel>
-                              <FormDescription>Apply tax on bills</FormDescription>
+                              <FormDescription>Apply tax on services only (not products)</FormDescription>
                             </div>
                             <FormControl>
                               <Switch

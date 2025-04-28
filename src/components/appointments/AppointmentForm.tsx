@@ -131,10 +131,14 @@ export const AppointmentForm = ({ onSubmit, initialData, initialDate }: Appointm
       service_name: serviceName,
       start_time: dateTime.toISOString(),
       end_time: endTime.toISOString(),
-      status: values.status,
+      status: values.status as AppointmentStatus,
       notes: values.notes,
-      user_id: user?.id || '123',
     };
+
+    // Only add user_id if we have a user
+    if (user?.id) {
+      appointmentData.user_id = user.id;
+    }
 
     onSubmit(appointmentData);
   };
