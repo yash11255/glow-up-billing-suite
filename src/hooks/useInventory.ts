@@ -3,13 +3,14 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Product, Company } from "@/types";
 
 export const useInventory = (selectedCompany: string) => {
   const { user } = useAuth();
-  const [inventory, setInventory] = useState<any[]>([]);
+  const [inventory, setInventory] = useState<Product[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
-  const [companies, setCompanies] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
 
   useEffect(() => {
     if (selectedCompany) {
