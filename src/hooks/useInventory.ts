@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Product, Company } from "@/types";
+import type { Product, Company } from "@/types";
 
 export const useInventory = (selectedCompany: string) => {
   const { user } = useAuth();
@@ -29,8 +29,7 @@ export const useInventory = (selectedCompany: string) => {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("*, companies:company_id(*)")
-        .eq("user_id", user.id);
+        .select("*, companies:company_id(*)");
       if (error) throw error;
       setInventory(data || []);
     } catch (error: any) {
