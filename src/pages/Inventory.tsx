@@ -23,9 +23,10 @@ const Inventory = () => {
   const [open, setOpen] = useState(false);
   const [newItem, setNewItem] = useState({
     name: "",
-    quantity: 0,
+    price: 0,
+    stock: 0,
     unit: "",
-    category: "",
+    category_id: "",
     company_id: "",
   });
   const [selectedCompany, setSelectedCompany] = useState<string>("");
@@ -47,15 +48,24 @@ const Inventory = () => {
     try {
       const { error } = await supabase
         .from("products")
-        .insert([{ ...newItem, user_id: user.id }]);
+        .insert({
+          name: newItem.name,
+          price: newItem.price,
+          stock: newItem.stock,
+          category_id: newItem.category_id || null,
+          company_id: newItem.company_id || null,
+          user_id: user.id
+        });
+        
       if (error) throw error;
       
       setOpen(false);
       setNewItem({
         name: "",
-        quantity: 0,
+        price: 0,
+        stock: 0,
         unit: "",
-        category: "",
+        category_id: "",
         company_id: "",
       });
       toast.success("Item added successfully!");

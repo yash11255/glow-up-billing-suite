@@ -62,27 +62,27 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="quantity" className="text-right">
-              Quantity
+            <label htmlFor="price" className="text-right">
+              Price
             </label>
             <input
               type="number"
-              name="quantity"
-              id="quantity"
-              value={newItem.quantity}
+              name="price"
+              id="price"
+              value={newItem.price}
               onChange={handleInputChange}
               className="col-span-3 rounded-md border-border px-3 py-2 bg-background text-foreground shadow-sm focus:border-primary focus:ring focus:ring-primary/30 focus:ring-opacity-50"
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="unit" className="text-right">
-              Unit
+            <label htmlFor="stock" className="text-right">
+              Stock
             </label>
             <input
-              type="text"
-              name="unit"
-              id="unit"
-              value={newItem.unit}
+              type="number"
+              name="stock"
+              id="stock"
+              value={newItem.stock}
               onChange={handleInputChange}
               className="col-span-3 rounded-md border-border px-3 py-2 bg-background text-foreground shadow-sm focus:border-primary focus:ring focus:ring-primary/30 focus:ring-opacity-50"
             />
@@ -91,13 +91,13 @@ const AddItemDialog: React.FC<AddItemDialogProps> = ({
             <label htmlFor="category" className="text-right">
               Category
             </label>
-            <Select onValueChange={(value) => handleSelectChange("category", value)}>
+            <Select onValueChange={(value) => handleSelectChange("category_id", value)}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
+                {categories.map((category, index) => (
+                  <SelectItem key={index} value={category}>
                     {category}
                   </SelectItem>
                 ))}
