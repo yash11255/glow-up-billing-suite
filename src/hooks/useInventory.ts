@@ -85,13 +85,13 @@ export const useInventory = (selectedCompany: string) => {
     if (!user) return;
     try {
       const { data, error } = await supabase
-        .from("inventory")
-        .select("category")
+        .from("product_categories")
+        .select("name")
         .eq("user_id", user.id);
       if (error) throw error;
 
       const uniqueCategories = [
-        ...new Set(data?.map((item: any) => item.category)),
+        ...new Set(data?.map((item: any) => item.name)),
       ];
       setCategories(uniqueCategories as string[]);
     } catch (error: any) {

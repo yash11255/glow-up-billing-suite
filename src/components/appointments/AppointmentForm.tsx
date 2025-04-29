@@ -140,9 +140,19 @@ export const AppointmentForm = ({ onSubmit, initialData = {}, initialDate }: App
     // If it's a new customer, create them first
     if (isNewCustomer && !appointment.customer_id) {
       try {
+        // Ensure required fields are present
+        if (!customer.name || !customer.phone) {
+          toast.error("Customer name and phone are required");
+          return;
+        }
+
         const { data, error } = await supabase
           .from("customers")
-          .insert([{ ...customer, user_id: user?.id }])
+          .insert({
+            name: customer.name,
+            phone: customer.phone,
+            user_id: user?.id
+          })
           .select()
           .single();
         
