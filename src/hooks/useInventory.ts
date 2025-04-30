@@ -3,12 +3,12 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { Product, Company } from "@/types";
+import type { Product, Company, Service } from "@/types";
 
 export const useInventory = (selectedCompany: string) => {
   const { user } = useAuth();
   const [inventory, setInventory] = useState<Product[]>([]);
-  const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
 
@@ -27,13 +27,13 @@ export const useInventory = (selectedCompany: string) => {
   const fetchInventory = async () => {
     if (!user) return;
     try {
-      // Define the return type explicitly to avoid deep type instantiation
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, price, stock, category_id, company_id, user_id, companies:company_id(id, name)");
+        .select("id, name, price, stock, category_id, company_id, user_id, companies:company_id(id, name)")
+        .eq("user_id", user.id);
       
       if (error) throw error;
-      setInventory(data || []);
+      setInventory(data as Product[] || []);
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -42,7 +42,6 @@ export const useInventory = (selectedCompany: string) => {
   const fetchInventoryByCompany = async (companyId: string) => {
     if (!user) return;
     try {
-      // Define the return type explicitly to avoid deep type instantiation
       const { data, error } = await supabase
         .from("products")
         .select("id, name, price, stock, category_id, company_id, user_id, companies:company_id(id, name)")
@@ -50,7 +49,7 @@ export const useInventory = (selectedCompany: string) => {
         .eq("company_id", companyId);
         
       if (error) throw error;
-      setInventory(data || []);
+      setInventory(data as Product[] || []);
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -64,7 +63,7 @@ export const useInventory = (selectedCompany: string) => {
         .select("id, name, price, duration, description, user_id")
         .eq("user_id", user.id);
       if (error) throw error;
-      setServices(data || []);
+      setServices(data as Service[] || []);
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -73,13 +72,18 @@ export const useInventory = (selectedCompany: string) => {
   const fetchServicesByCompany = async (companyId: string) => {
     if (!user) return;
     try {
+      // Explicitly define the type of the query to avoid deep instantiation
+      interface ServiceWithCompany extends Service {
+        company_id: string;
+      }
+      
       const { data, error } = await supabase
         .from("services")
         .select("id, name, price, duration, description, user_id, company_id")
         .eq("user_id", user.id)
         .eq("company_id", companyId);
       if (error) throw error;
-      setServices(data || []);
+      setServices(data as ServiceWithCompany[] || []);
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -88,6 +92,12 @@ export const useInventory = (selectedCompany: string) => {
   const fetchCategories = async () => {
     if (!user) return;
     try {
+      interface CategoryRecord {
+        id: string;
+        name: string;
+        user_id: string;
+      }
+      
       const { data, error } = await supabase
         .from("product_categories")
         .select("id, name, user_id")
@@ -95,7 +105,7 @@ export const useInventory = (selectedCompany: string) => {
       if (error) throw error;
 
       const uniqueCategories = [
-        ...new Set(data?.map((item: {name: string}) => item.name)),
+        ...new Set((data as CategoryRecord[] || []).map((item) => item.name)),
       ];
       setCategories(uniqueCategories as string[]);
     } catch (error: any) {
@@ -111,7 +121,7 @@ export const useInventory = (selectedCompany: string) => {
         .select("id, name, user_id")
         .eq("user_id", user.id);
       if (error) throw error;
-      setCompanies(data || []);
+      setCompanies(data as Company[] || []);
     } catch (error: any) {
       toast.error(error.message);
     }
