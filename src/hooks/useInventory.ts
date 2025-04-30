@@ -27,9 +27,11 @@ export const useInventory = (selectedCompany: string) => {
   const fetchInventory = async () => {
     if (!user) return;
     try {
+      // Define the return type explicitly to avoid deep type instantiation
       const { data, error } = await supabase
         .from("products")
-        .select("*, companies:company_id(*)");
+        .select("id, name, price, stock, category_id, company_id, user_id, companies:company_id(id, name)");
+      
       if (error) throw error;
       setInventory(data || []);
     } catch (error: any) {
@@ -40,11 +42,13 @@ export const useInventory = (selectedCompany: string) => {
   const fetchInventoryByCompany = async (companyId: string) => {
     if (!user) return;
     try {
+      // Define the return type explicitly to avoid deep type instantiation
       const { data, error } = await supabase
         .from("products")
-        .select("*, companies:company_id(*)")
+        .select("id, name, price, stock, category_id, company_id, user_id, companies:company_id(id, name)")
         .eq("user_id", user.id)
         .eq("company_id", companyId);
+        
       if (error) throw error;
       setInventory(data || []);
     } catch (error: any) {
