@@ -61,7 +61,7 @@ export const useInventory = (selectedCompany: string) => {
     try {
       const { data, error } = await supabase
         .from("services")
-        .select("*")
+        .select("id, name, price, duration, description, user_id")
         .eq("user_id", user.id);
       if (error) throw error;
       setServices(data || []);
@@ -75,7 +75,7 @@ export const useInventory = (selectedCompany: string) => {
     try {
       const { data, error } = await supabase
         .from("services")
-        .select("*")
+        .select("id, name, price, duration, description, user_id, company_id")
         .eq("user_id", user.id)
         .eq("company_id", companyId);
       if (error) throw error;
@@ -90,12 +90,12 @@ export const useInventory = (selectedCompany: string) => {
     try {
       const { data, error } = await supabase
         .from("product_categories")
-        .select("name")
+        .select("id, name, user_id")
         .eq("user_id", user.id);
       if (error) throw error;
 
       const uniqueCategories = [
-        ...new Set(data?.map((item: any) => item.name)),
+        ...new Set(data?.map((item: {name: string}) => item.name)),
       ];
       setCategories(uniqueCategories as string[]);
     } catch (error: any) {
@@ -108,7 +108,7 @@ export const useInventory = (selectedCompany: string) => {
     try {
       const { data, error } = await supabase
         .from("companies")
-        .select("*")
+        .select("id, name, user_id")
         .eq("user_id", user.id);
       if (error) throw error;
       setCompanies(data || []);
